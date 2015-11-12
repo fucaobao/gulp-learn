@@ -1,0 +1,78 @@
+#handleImage {
+    background-color: #000;
+    position: fixed;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 9999;
+}
+
+.canvas_img,
+.canvas,
+.canvas_div,
+.canvas_btn,
+.canvas_bg {
+    position: absolute;
+}
+
+.canvas_div,
+.canvas_bg {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.canvas_img {
+    z-index: 1;
+}
+
+.canvas_bg {
+    background-color: rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+.canvas {
+    left: 0;
+    top: 0;
+    border: 1px solid #fff;
+    z-index: 100;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.canvas_div {
+    z-index: 999;
+}
+
+.canvas_btn {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background-color: #333;
+    z-index: 1000;
+}
+
+.canvas_btn a {
+    float: left;
+    color: #fff;
+    width: 80px;
+    height: 50px;
+    line-height: 50px;
+    text-decoration: none;
+    text-align: center;
+}
+
+.canvas_btn .canvas_ok {
+    float: right;
+}
+
+.canvas_save:active {
+    color: #fff;
+}
