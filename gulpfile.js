@@ -105,10 +105,9 @@ gulp.task('default', ['js', 'css', 'images', 'page', 'jshint']);
 // gulp.task('default', gulpSequence('clean', ['js', 'css', 'images', 'page']));
 gulp.task('test1', function(callback){
     console.log(1);//执行了
-    // gulp.run('build');
-    // console.log(2)
+    gulp.run('build');
 });
 gulp.task('test2',['clean'], function(callback){
     console.log(2);//没有执行
-    // gulp.run('build');
+    gulp.run('build');
 });
