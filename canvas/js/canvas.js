@@ -1,10 +1,8 @@
-// var eventType = isPC() ? "click" : "tap";
+var eventType = isPC() ? "click" : "tap";
 var eventType = "click";
 //上传图片相关的参数
 var params = {
-    "upload": "http://qwd.jd.com/cgi-bin/image_upload",
     "div_height": 50, //底部"取消"和"选取"所在div的高度
-    "timeout": 20000,
     "sqrt": 1,
     "isScale": false //图片是否有放大/缩小过
 };
@@ -29,7 +27,7 @@ var headpic = {
         can_obj.style.top = (c_h - c_w - 2) / 2 + "px";
     },
     bindEvent: function() {
-        $(".file").on("change", fileChange);
+        document.querySelectorAll('.file')[0].addEventListener('change', fileChange, false);
     },
     handleUpload: function(file, callback) {
         var imageReader = new FileReader();
@@ -61,7 +59,7 @@ var headpic = {
                         var base64 = tmpCanvas.toDataURL('image/jpeg', 1);
                         tmpContext = null;
                         tmpCanvas = null;
-                        $("#canvas_img").attr("src", base64);
+                        document.querySelector('#canvas_img').setAttribute('src', base64);
                         callback && callback(file, allTag);
                     }, 300); //等待前面的canvas绘制完成后再执行
                 });
@@ -90,7 +88,6 @@ var headpic = {
 
         function load() {
             img_obj.onload = function() {
-                $("#loading span").text("正在加载图片...");
                 $("#loading").hide();
                 $("#handleImage").show();
                 //在图片显示后，设置图片自适应大小及图片的居中显示
@@ -103,7 +100,7 @@ var headpic = {
             div_obj.addEventListener('touchstart', touch, false);
             div_obj.addEventListener('touchmove', touch, false);
             div_obj.addEventListener('touchend', touchend, false);
-            // ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
+
             function touchend(event) {
                 event.preventDefault(); //阻止浏览器或body 其他冒泡事件
                 if (!params.isScale && sqrt <= params.sqrt) {
@@ -134,7 +131,6 @@ var headpic = {
                     var _y = img_obj.offsetTop;
                     distX = _x + left_x / 2 - 1;
                     distY = _y - parseFloat(can_obj.style.top) + left_y / 2 - 1;
-                    // ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
                 } else {
                     if (sqrt <= params.sqrt) { //如果是缩小
                         sqrt = params.sqrt;
@@ -147,7 +143,6 @@ var headpic = {
                         left_y = 0;
                         distX = _x + left_x / 2 + h - 1;
                         distY = _y - parseFloat(can_obj.style.top) + left_y / 2 - 1;
-                        // ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
                         params.isScale = false;
                     } else { // 如果是放大
                         var dImg_left = parseFloat(img_obj.style.left),
@@ -183,7 +178,6 @@ var headpic = {
                         }
                         distX = left_img;
                         distY = top_img;
-                        // ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
                         params.isScale = false;
                     }
                 }
@@ -200,9 +194,7 @@ var headpic = {
                     if (event.type == "touchstart") { //开始移动
                         posX = mv_x1 - img_obj.offsetLeft; //获取img相对坐标
                         posY = mv_y1 - img_obj.offsetTop;
-                        // ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
                     } else if (event.type == "touchmove") { //移动中
-                        // ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
                         var _x = mv_x1 - posX; //移动坐标
                         var _y = mv_y1 - posY;
                         img_obj.style.left = _x + "px";
@@ -216,9 +208,7 @@ var headpic = {
                         start_X2 = touchList[1].clientX;
                         start_Y2 = touchList[1].clientY;
                         start_sqrt = Math.sqrt(Math.pow(start_X2 - start_X1, 2) + Math.pow(start_Y2 - start_Y1, 2)) / 200; //获取在缩放时 当前缩放的值
-                        // ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
                     } else if (event.type == "touchmove") {
-                        // ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
                         params.isScale = true;
                         var mv_x2 = touchList[1].clientX,
                             mv_y2 = touchList[1].clientY;
@@ -231,32 +221,31 @@ var headpic = {
             }
         }
         //裁图
-        $("#save_img").on(eventType, function() {
+        document.querySelector('#save_img').addEventListener(eventType, function() {
             ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
             ctx_img.drawImage(img_obj, distX, distY, img_obj.width * sqrt, img_obj.height * sqrt);
             var base64 = can_obj.toDataURL('image/png', 1);
-            $("#loading").show();
-            uploadImg(file, base64, function(url) {
-                $(".headpic_preview img").attr("src", url);
-            });
+            document.querySelectorAll('.headpic_preview img')[0].setAttribute('src', base64);
             _initImg();
             $("#save_img").off(eventType); //修复多次执行回调函数的BUG
-        });
-        $("#cancel_img").on(eventType, function() {
+        }, false);
+        document.querySelector('#cancel_img').addEventListener(eventType, function() {
             _initImg();
             $("#cancel_img").off(eventType); //修复多次执行回调函数的BUG
         });
 
         function _initImg() {
             fixUploadImgBug();
+            var selector = document.querySelector('#handleImage');
             params.isScale = false;
             sqrt = params.sqrt;
             ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
             //删掉图片的长度和宽度，以免对下一次求图片长度/宽度的时候发生错误
             $("#canvas_img").removeAttr("height").removeAttr("width").removeAttr("style");
-            var tpl = $("#handleImage").html();
+            var tpl = document.querySelector('#handleImage').innerHTML;
             //先清空再添加进去，是为了消除影响
-            $("#handleImage").html("").html(tpl).hide();
+            document.querySelector('#handleImage').innerHTML = tpl;
+            $("#handleImage").hide();
         }
         //图片宽度始终与屏幕宽度相等
         function _autoResizeImage(allTag) {
@@ -278,62 +267,6 @@ var headpic = {
         }
     }
 };
-
-function uploadImg(file, base64, callback) {
-    $("#loading").show();
-    var formData = new FormData();
-    //兼容安卓的文件名可能是路径的问题
-    formData.append("imageurl", _getFileName(file.name));
-    formData.append("base64", 1);
-    // formData.append("rx", 78); //宽
-    // formData.append("ry", 78); //高
-    //删掉前面的"data:image/png;base64,"
-    formData.append("content", base64.substring(22));
-    var xhr = new XMLHttpRequest();
-    xhr.open("post", params.upload, true);
-    xhr.send(formData);
-    xhr.onreadystatechange = function(resp) {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            try {
-                var respData = resp.currentTarget.response,
-                    data = JSON.parse(respData);
-                if (data.errCode == 0) {
-                    var url = _changeImageUrl(decodeURIComponent(data.imageurl));
-                    typeof callback === "function" && callback(url);
-                } else {
-                    alert("上传图片失败，请稍候再试！");
-                }
-            } catch (e) {
-                alert("上传图片失败，请稍候再试！");
-            } finally {
-                xhr.abort(); //这里将readyState置为0
-                $("#loading").hide();
-            }
-        }
-    };
-    setTimeout(function() {
-        if (xhr.readyState !== 0) {
-            xhr.abort();
-            alert("上传图片失败，请稍候再试！");
-        }
-        $("#loading").hide();
-    }, params.timeout);
-
-    function _getFileName(name) {
-        var index = name.lastIndexOf("/");
-        if (index === -1) {
-            return name;
-        }
-        return name.substring(index + 1);
-    }
-
-    function _changeImageUrl(url, width, height) {
-        var index = url.indexOf("/jfs/");
-        width = width || 200;
-        height = height || 200;
-        return url.substring(0, index + 1) + "s" + width + "x" + height + "_" + url.substring(index + 1);
-    }
-}
 // 判断图片是否加载完成
 function loadImage(url, callback) {
     var image = new Image();
@@ -365,7 +298,6 @@ function fixUploadImgBug() {
 
 function fileChange() {
     var file = this.files[0];
-    $("#loading span").text("正在加载图片...");
     $("#loading").show();
     headpic.handleUpload(file, headpic.uploadModule);
 }
