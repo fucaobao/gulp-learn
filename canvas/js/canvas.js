@@ -11,7 +11,7 @@
         c_h = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) - params.div_height;
     var can_obj = document.querySelector("#canvas"),
         ctx_img = can_obj.getContext("2d");
-    var headpic = {
+    var pic = {
         init: function() {
             var me = this;
             me.setCanvasXY();
@@ -24,9 +24,9 @@
             can_obj.style.top = (c_h - c_w - 2) / 2 + "px";
         },
         bindEvent: function() {
-            document.querySelectorAll('.file')[0].addEventListener('change', fileChange, false);
+            document.querySelector('.file').addEventListener('change', fileChange, false);
         },
-        handleUpload: function(file, callback) {
+        fixIOSBug: function(file, callback) {
             var imageReader = new FileReader();
             imageReader.readAsDataURL(file);
             imageReader.onload = function() {
@@ -35,14 +35,14 @@
                 el.onload = function() {
                     el.onload = null; //避免重复触发
                     EXIF.getData(el, function() {
-                        var allTag = EXIF.getAllTags(el);
-                        var mpImg = new MegaPixImage(file);
-                        var tmpCanvas = document.createElement("canvas"),
+                        var allTag = EXIF.getAllTags(el),
+                            mpImg = new MegaPixImage(file),
+                            tmpCanvas = document.createElement("canvas"),
                             tmpContext = tmpCanvas.getContext("2d");
                         tmpContext.clearRect(0, 0, tmpCanvas.width, tmpCanvas.height); //清除画布
                         var w = allTag.PixelXDimension,
                             h = allTag.PixelYDimension;
-                        if (w >= 3264 || h >= 2448) {
+                        while (w >= 3264 || h >= 2448) {
                             w = (w * 0.5).toFixed(2);
                             h = (h * 0.5).toFixed(2);
                         }
@@ -52,11 +52,12 @@
                             quality: 1,
                             orientation: allTag.Orientation || 1
                         });
-                        setTimeout(function() {
+                        var _timeout = setTimeout(function() {
+                            clearTimeout(_timeout);
                             var base64 = tmpCanvas.toDataURL('image/jpeg', 1);
-                            tmpContext = null;
                             tmpCanvas = null;
-                            document.querySelector('#canvas_img').setAttribute('src', base64);
+                            tmpContext = null;
+                            el.setAttribute('src', base64);
                             callback && callback(file, allTag);
                         }, 300); //等待前面的canvas绘制完成后再执行
                     });
@@ -77,8 +78,8 @@
                 start_Y2 = 0;
             var start_sqrt = 0, //开始缩放比例
                 sqrt = params.sqrt;
-            var _x = 0;
-            var _y = 0;
+            var _x = 0,
+                _y = 0;
             var left_x = 0,
                 left_y = 0; //计算 偏移量 设置画布中的X，Y轴 (加偏移量)
             var distX = 0,
@@ -90,7 +91,7 @@
                     document.querySelector('#loading').style.display = 'none';
                     document.querySelector('#handleImage').style.display = 'block';
                     //在图片显示后，设置图片自适应大小及图片的居中显示
-                    _autoResizeImage(allTag);
+                    autoResizeImage(allTag);
                     img_obj.style.top = (c_h - img_obj.height - 2) / 2 + "px";
                     img_obj.style.left = (c_w - img_obj.width) / 2 + "px";
                     distX = (can_obj.width - img_obj.width) / 2;
@@ -104,9 +105,9 @@
                     event.preventDefault(); //阻止浏览器或body 其他冒泡事件
                     if (!params.isScale && sqrt <= params.sqrt) {
                         sqrt = params.sqrt;
+                        img_obj.style.left = "0px";
                         img_obj.style.webkitTransform = "scale(" + sqrt + ")"; //设置放大缩小
                         img_obj.style.Transform = "scale(" + sqrt + ")";
-                        img_obj.style.left = "0px";
                         //图片离顶部的距离
                         var imgTopX = parseFloat(img_obj.style.top);
                         //canvas框离顶部的距离
@@ -162,8 +163,8 @@
                             }
                             //如果上面超出范围
                             if (top_img > 0) {
-                                img_obj.style.top = Math.abs(left_y / 2) + dCav_top + "px";
                                 top_img = 0;
+                                img_obj.style.top = Math.abs(left_y / 2) + dCav_top + "px";
                             }
                             //如果右侧超出范围
                             if (left_img + sw < can_obj.width) {
@@ -172,8 +173,8 @@
                             }
                             //如果下面超出范围
                             if (top_img + sh < can_obj.height) {
-                                img_obj.style.top = (c_h + can_obj.height - (sqrt + 1) * h) / 2 + "px";
                                 top_img = can_obj.height - sh;
+                                img_obj.style.top = (c_h + can_obj.height - (sqrt + 1) * h) / 2 + "px";
                             }
                             distX = left_img;
                             distY = top_img;
@@ -219,25 +220,17 @@
                     }
                 }
             }
-            var saveImgHandler = function() {
-                    ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
-                    ctx_img.drawImage(img_obj, distX, distY, img_obj.width * sqrt, img_obj.height * sqrt);
-                    var base64 = can_obj.toDataURL('image/png', 1);
-                    document.querySelectorAll('.headpic_preview img')[0].setAttribute('src', base64);
-                    _initImg();
-                    //修复多次执行回调函数的BUG
-                    document.querySelector('#save_img').removeEventListener(eventType, saveImgHandler);
-                },
-                canvelImgHandler = function() {
-                    _initImg();
-                    //修复多次执行回调函数的BUG
-                    document.querySelector('#cancel_img').removeEventListener(eventType, saveImgHandler);
-                };
             //裁图
-            document.querySelector('#save_img').addEventListener(eventType, saveImgHandler, false);
-            document.querySelector('#cancel_img').addEventListener(eventType, canvelImgHandler, false);
+            document.querySelector('#save_img').addEventListener(eventType, function() {
+                ctx_img.clearRect(0, 0, can_obj.width, can_obj.height); //清除画布
+                ctx_img.drawImage(img_obj, distX, distY, img_obj.width * sqrt, img_obj.height * sqrt);
+                var base64 = can_obj.toDataURL('image/png', 1);
+                document.querySelectorAll('.headpic_preview img')[0].setAttribute('src', base64);
+                initImg();
+            }, false);
+            document.querySelector('#cancel_img').addEventListener(eventType, initImg, false);
 
-            function _initImg() {
+            function initImg() {
                 fixUploadImgBug();
                 var selector = document.querySelector('#handleImage');
                 var canvasImg = document.querySelector('#canvas_img');
@@ -248,13 +241,10 @@
                 canvasImg.removeAttribute('height');
                 canvasImg.removeAttribute('width');
                 canvasImg.removeAttribute('style');
-                var tpl = document.querySelector('#handleImage').innerHTML;
-                //先清空再添加进去，是为了消除影响
-                document.querySelector('#handleImage').innerHTML = tpl;
-                document.querySelector('#handleImage').style.display = 'none';
+                selector.style.display = 'none';
             }
             //图片宽度始终与屏幕宽度相等
-            function _autoResizeImage(allTag) {
+            function autoResizeImage(allTag) {
                 var w = allTag.PixelXDimension || img_obj.width;
                 var h = allTag.PixelYDimension || img_obj.height;
                 // 超过这个值base64无法生成，在IOS上
@@ -279,15 +269,14 @@
         var selector = document.querySelector('.file');
         selector.removeEventListener('change', fileChange);
         selector.parentNode.removeChild(selector);
-        var tpl = document.querySelector('#upload').innerHTML;
-        document.querySelector('#upload').innerHTML = '<input class="file" type="file" name="imageurl" accept="image/*">' + tpl;
+        document.querySelector('#upload').innerHTML = '<input class="file" type="file" name="imageurl" accept="image/*">' + document.querySelector('#upload').innerHTML;
         document.querySelector('.file').addEventListener('change', fileChange, false)
     }
 
     function fileChange() {
         var file = this.files[0];
         document.querySelector('#loading').style.display = 'block';
-        headpic.handleUpload(file, headpic.uploadModule);
+        pic.fixIOSBug(file, pic.uploadModule);
     }
-    headpic.init();
+    pic.init();
 })();
