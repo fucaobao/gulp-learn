@@ -4,18 +4,20 @@ var uglify = require('gulp-uglify');	   	//压缩JS
 var minifyCss = require('gulp-minify-css');	//压缩CSS
 var imagemin = require('gulp-imagemin');   	//压缩图片
 var concat = require('gulp-concat');       	//合并文件
-var jshint = require('gulp-jshint');       	//合并文件
+var jshint = require('gulp-jshint');       	//检测JS语法
 var map = require('map-stream');
-var del = require('del');				   	//删除文件
+var del = require('del');                   //删除文件
 var rename = require('gulp-rename');	   	//修改文件名
 var rev = require('gulp-rev');             	//MD5
 var fs = require('fs');             		//文件操作
 var mkdirp = require('mkdirp');             //递归新建文件夹
+var walk = require('./walk')('./canvas');
 var paths = {
-    js: ['./canvas/js/*.js'],
-    css: ['./canvas/css/*.css'],
-    images: ['./canvas/images/*.*'],
-    page: ['./canvas/*.html'],
+    js: walk.js,
+    css: walk.css,
+    image: walk.image,
+    html: walk.html,
+    other: walk.other,
     build: 'build'
 };
 var getTimestamp = function(){
@@ -79,30 +81,43 @@ gulp.task('jshint', function () {
 gulp.task('js', function () {
     return gulp.src(paths.js)
         .pipe(uglify())
-        .pipe(gulp.dest(paths.build + '/js'));
+        .pipe(gulp.dest(function(file){
+            var base = file.base,
+                cwd = file.cwd;
+            return paths.build + '/' + base.substring(cwd.length + 1);
+        }));
 });
 gulp.task('css', function () {
     return gulp.src(paths.css)
         .pipe(minifyCss())
         .pipe(gulp.dest(paths.build + '/css'));
 });
-gulp.task('images', function () {
-    return gulp.src(paths.images)
+gulp.task('image', function () {
+    return gulp.src(paths.image)
         .pipe(imagemin())
-        .pipe(gulp.dest(paths.build + '/images'));
+        .pipe(gulp.dest(paths.build + '/image'));
 });
-gulp.task('page', function () {
-    return gulp.src(paths.page)
+gulp.task('html', function () {
+    return gulp.src(paths.html)
         .pipe(gulp.dest(paths.build));
+});
+gulp.task('other', function () {
+    return gulp.src(paths.other)
+        .pipe(gulp.dest(function(file){
+            var base = file.base,
+                cwd = file.cwd;
+            return paths.build + '/' + base.substring(cwd.length + 1);
+        }));
 });
 gulp.task('watch', function() {
     gulp.watch(paths.js, ['js']);
     gulp.watch(paths.css, ['css']);
-    gulp.watch(paths.images, ['images']);
-    gulp.watch(paths.page, ['page']);
+    gulp.watch(paths.image, ['image']);
+    gulp.watch(paths.html, ['html']);
+    gulp.watch(paths.other, ['other']);
 });
-gulp.task('default', ['js', 'css', 'images', 'page', 'jshint']);
-// gulp.task('default', gulpSequence('clean', ['js', 'css', 'images', 'page']));
+gulp.task('default', ['js', 'css', 'image', 'html', 'other', 'jshint']);
+// gulp.task('default', gulpSequence('clean', ['js', 'css', 'image', 'html', 'other']));
 gulp.task('test1', function(callback){
     console.log(1);//执行了
     gulp.run('build');
