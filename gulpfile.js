@@ -10,7 +10,7 @@ var htmlmin = require('gulp-htmlmin');      //压缩HTML
 var map = require('map-stream');
 var del = require('del');                   //删除文件
 var rename = require('gulp-rename');	   	//修改文件名
-var rev = require('gulp-rev');             	//MD5
+var md5 = require('gulp-md5-plus');         //MD5
 var fs = require('fs');             		//文件操作
 var mkdirp = require('mkdirp');             //递归新建文件夹
 var walk = require('./walk')('./canvas');
@@ -24,7 +24,7 @@ var paths = {
 };
 var getTimestamp = function(){
 	var dt = new Date();
-        y = dt.getFullYear(),
+    var y = dt.getFullYear(),
         M = dt.getMonth() + 1,
         d = dt.getDate(),
         h = dt.getHours(),
@@ -87,7 +87,8 @@ gulp.task('js', function () {
             var base = file.base,
                 cwd = file.cwd;
             return paths.build + '/' + base.substring(cwd.length + 1);
-        }));
+        }))
+        .pipe(md5(10, 'canvas' + '/index_test.html'));
 });
 gulp.task('css', function () {
     return sass(paths.css)
@@ -126,8 +127,8 @@ gulp.task('watch', function() {
     gulp.watch(paths.html, ['html']);
     gulp.watch(paths.other, ['other']);
 });
-gulp.task('default', ['js', 'css', 'image', 'html', 'other', 'jshint']);
-// gulp.task('default', gulpSequence('clean', ['js', 'css', 'image', 'html', 'other']));
+// gulp.task('default', ['html', 'js', 'css', 'image', 'other', 'jshint']);
+gulp.task('default', gulpSequence(['clean', 'html', 'js', 'css', 'image','other']));
 gulp.task('test1', function(callback){
     console.log(1);//执行了
     gulp.run('build');
