@@ -20,7 +20,7 @@ var paths = {
     image: walk.image,
     html: walk.html,
     other: walk.other,
-    build: 'build'
+    dest: 'assets'
 };
 var getTimestamp = function(){
 	var dt = new Date();
@@ -57,11 +57,11 @@ var getFileName = function(path){
     }
 };
 gulp.task('clean', function (callback) {
-    del(paths.build, callback);
+    del(paths.dest, callback);
 });
 
 var myReporter = map(function(file, cb) {
-	var parent = paths.build + '/report/';
+	var parent = paths.dest + '/report/';
     mkdirp(parent, function(err, callback) {
         if (!file.jshint.success) {
             var filename = parent + getFileName(file.path);
@@ -86,7 +86,7 @@ gulp.task('js', function () {
         .pipe(gulp.dest(function(file){
             var base = file.base,
                 cwd = file.cwd;
-            return paths.build + '/' + base.substring(cwd.length + 1);
+            return paths.dest + '/' + base.substring(cwd.length + 1);
         }))
         .pipe(md5(10, 'canvas' + '/index_test.html'));
 });
@@ -97,27 +97,27 @@ gulp.task('css', function () {
             var base = file.base,
                 cwd = file.cwd;
             if(base.indexOf(cwd) === -1){
-                return paths.build + '/' + base; 
+                return paths.dest + '/' + base; 
             }
-            return paths.build + '/' + base.substring(cwd.length + 1);
+            return paths.dest + '/' + base.substring(cwd.length + 1);
         }));
 });
 gulp.task('image', function () {
     return gulp.src(paths.image)
         .pipe(imagemin())
-        .pipe(gulp.dest(paths.build + '/image'));
+        .pipe(gulp.dest(paths.dest + '/image'));
 });
 gulp.task('html', function () {
     return gulp.src(paths.html)
         .pipe(htmlmin())
-        .pipe(gulp.dest(paths.build));
+        .pipe(gulp.dest(paths.dest));
 });
 gulp.task('other', function () {
     return gulp.src(paths.other)
         .pipe(gulp.dest(function(file){
             var base = file.base,
                 cwd = file.cwd;
-            return paths.build + '/' + base.substring(cwd.length + 1);
+            return paths.dest + '/' + base.substring(cwd.length + 1);
         }));
 });
 gulp.task('watch', function() {
@@ -131,9 +131,9 @@ gulp.task('watch', function() {
 gulp.task('default', gulpSequence(['clean', 'html', 'js', 'css', 'image','other']));
 gulp.task('test1', function(callback){
     console.log(1);//执行了
-    gulp.run('build');
+    gulp.run('dest');
 });
 gulp.task('test2',['clean'], function(callback){
     console.log(2);//没有执行
-    gulp.run('build');
+    gulp.run('dest');
 });
